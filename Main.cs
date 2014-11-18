@@ -10,41 +10,78 @@ namespace File_vokab
 {	
 	class MainClass
 	{
-		static void Main (string[] args)
+        public static List<string> CreateCol(string fst) // функция преобразующая строку в список
+        {
+            List<string> kol = new List<string>(fst.Split(' '));  //разбивка строки на слова и запись в коллекцию				
+            string znak = ".,;!?-:\"()";
+            for (int tt = 0; tt < kol.Count; tt++)  // перебор слов в строке
+            {
+                string p = kol[tt];			// p присваивается значение слова из массива
+                char[] buk = p.ToCharArray();
+                int k = buk.Length-1;
+                if (znak.Contains(buk[k]))		// проверка является ли последний символ в слове знаком препинания							
+                {
+                    string zn = Convert.ToString(buk[k]);
+                    p = p.Remove(k);				// отрезаем знак от слова
+                    kol[tt] = p;					//запись нового слова
+                    tt++;
+                    kol.Insert(tt, zn);			//запись знака в коллекци, дабы его не потерять																								
+                }
+            }
+            return kol;
+        }
+
+        public static string newSt(List<string> col, string[] readVoc)  //функция записывает список с изменениями в строку
+        {
+            string znak = ".,;!?-:\"\"";
+            string resultSt = "";
+            for (int tt = 0; tt < col.Count; tt++)		//перебор значения коллекции
+            {
+                foreach (string vk in readVoc)		//перебор  слов из словаря для проверки соответствия
+                {
+                    string t = vk.Trim();				// удаление знака пробела в начале и в конце строки
+                    if (String.Equals(t, col[tt], StringComparison.CurrentCultureIgnoreCase))	//в случае совпадения со словом из словаря (без учета реестра), делает его жирным и курсивом
+                        col[tt] = "<b><i>" + col[tt] + "</b></i>";
+                }
+                if (znak.Contains(col[tt]) == false) resultSt += " ";
+                resultSt += col[tt];             //запись слов в строку результат
+            }
+           return resultSt;
+        }
+
+        public static Boolean FileBig(string file)      //проверка превышает ли файл 2Мб
+        {
+            FileInfo namefile = new FileInfo(file);
+            long mb = 1048576 * 2;
+            if (namefile.Length > mb)
+            {
+                Console.WriteLine("Размер файла" + file + "превышает 2Мб.  Измените файл и запустите программу заново");
+                return true;
+            }
+            else return false;
+
+        }
+
+        static void Main (string[] args)
 		{
             try
             {
-            link: Console.WriteLine("Введите номер задания для исполнения: \n 1  тестовое \n 2  весна... \n 3  стихотворение(глаголы) \n 4  стихотворение (телефон, Чуковский)");
+            link: Console.WriteLine("Введите номер задания для исполнения: \n 1  тестовое \n 2  весна... \n 3  стихотворение(глаголы) \n 4  стихотворение (телефон, Чуковский) \n 5  проза (Что такое жизнь?)");
                 Console.Write("Вы выбрали ");
-                string x = Console.ReadLine();				// выбор варианта текст-словарь
-                if ((x == "1") || (x == "2") || (x == "3") || (x == "4"))
+                string x = Console.ReadLine();				// выбор варианта текст-словарь с клавиатуры
+                if ((x == "1") || (x == "2") || (x == "3") || (x == "4") || (x == "5"))
                 {
                     string file = "vocabulary" + x + ".txt";				//открытие файла словаря	
-
-                    FileInfo text1 = new FileInfo("vocabulary" + x + ".txt");   //проверка превышает ли файл 2Мб
-                    long mb = 1048576 * 2;
-                    if (text1.Length > mb)
-                    {
-                        Console.WriteLine("Размер файла  vocabulary" + x + ".txt превышает 2Мб.  Измените файл и запустите программу заново");
-                        goto fun;
-                    }
-
-                    FileInfo text2 = new FileInfo("text" + x + ".txt");
-                    if (text2.Length > mb)
-                    {
-                        Console.WriteLine("Размер файла  text" + x + ".txt превышает 2Мб. Измените файл и запустите программу заново");
-                        goto fun;
-                    }
- 
-                    const int N=20; // константа количества строк в выходном файле
-                    int nn=N;
-                    
+                    if (FileBig(file) == true) goto link;             //проверка файла на превышение 2Мб
                     string[] readVoc = File.ReadAllLines(file);
-                    file = "text" + x + ".txt";                  
+                    file = "text" + x + ".txt";
+                    if (FileBig(file) == true) goto link;
                     StreamReader text = new StreamReader(file); //    создаем «потоковый читатель» и связываем его с файловым потоком 			 
                     FileStream file1 = new FileStream("result.html", FileMode.Create);    //создаем файл для записи результата
                     StreamWriter writer = new StreamWriter(file1, Encoding.UTF8);//  Encoding.UTF8  or Encoding.Unicode			
                     int kolstr = 0;
+                    const int N = 20; // константа количества строк в выходном файле
+                    int nn = N;
                     for (int i = 1; text.EndOfStream == false; i++)
                     {
                         string f = text.ReadLine();		 //исходный текст из файла построчно 
@@ -56,65 +93,58 @@ namespace File_vokab
                             i++;
                         }
                         kolstr++;
-                       
-                        List<string> kol = new List<string>(f.Split(' '));  //разбивка строки на слова и запись в коллекцию				
-                        string znak = ".,;!?-:\"";
-                        for (int tt = 0; tt < kol.Count; tt++)  // перебор слов в строке
+                        x = newSt((CreateCol(f)), readVoc);
+                        char[] point =  {'.','!','?'};
+                        if (kolstr >= nn)
                         {
-                            string p = kol[tt];			// p присваивается значение слова из массива
-                            char[] buk = p.ToCharArray();
-                            int k = buk.Length;
-                            k--;
-                            if (znak.Contains(buk[k]))		// проверка является ли последний символ в слове знаком препинания							
+                            foreach (char t in point)		//перебор  слов из словаря для проверки соответствия
                             {
-                                string zn = Convert.ToString(buk[k]);
-                                p = p.Remove(k);				// отрезаем знак от слова
-                                kol[tt] = p;					//запись нового слова
-                                tt++;
-                                kol.Insert(tt, zn);			//запись знака в коллекци, дабы его не потерять																								
-                            }
-                          
+                                    if (x.Contains(t))
+                                    {
+                                        if (x[x.Length - 1] == t)
+                                           {
+                                              writer.WriteLine(x);
+                                              writer.Close();
+                                              file1 = new FileStream("result" + (kolstr + 1) + ".html", FileMode.Create);    //создаем файл для записи результата
+                                              writer = new StreamWriter(file1, Encoding.UTF8);//  Encoding.UTF8  or Encoding.Unicode
+                                              nn = nn + N;
+                                              break;
+                                           }
+                                        else
+                                        { 
+                                            string[] xx2 = x.Split(t);
+                                            writer.WriteLine(xx2[0]);
+                                            writer.WriteLine(t);
+                                            writer.Close();
+                                            file1 = new FileStream("result" + (kolstr + 1) + ".html", FileMode.Create);    //создаем файл для записи результата
+                                            writer = new StreamWriter(file1, Encoding.UTF8);//  Encoding.UTF8  or Encoding.Unicode
+                                            nn = nn + N;
+                                            writer.WriteLine(xx2[1]);
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (t == '?')
+                                        {
+                                            writer.WriteLine(x);
+                                            writer.WriteLine("<br/>");
+                                        }
+                                    }
+                              }
                         }
-                        for (int tt = 0; tt < kol.Count; tt++)		//перебор значения коллекции
+                        else
                         {
-                            foreach (string vk in readVoc)		//перебор  слов из словаря для проверки соответствия
-                            {
-                                string t = vk.Trim();				// удаление знака пробела в начале и в конце строки
-                                if (String.Equals(t, kol[tt], StringComparison.CurrentCultureIgnoreCase))	//в случае совпадения со словом из словаря (без учета реестра), делает его жирным и курсивом
-                                    kol[tt] = "<b><i>" + kol[tt] + "</b></i>";
-                            }
-                           
-                            if (znak.Contains(kol[tt]))           //запись слов в файл результат 
-                                writer.Write(kol[tt]);
-                            else
-                                writer.Write(" " + kol[tt]);
-                            string point = ".;!?:";
-                            if ((kolstr >= nn) && (point.Contains(kol[tt])) && (tt == (kol.Count-1)))  // || (point == "!") || (point == "?") || (point == "-") || (point == ","))
-                            {
-                                writer.Close();
-                                file1 = new FileStream("result" + (kolstr+1) + ".html", FileMode.Create);    //создаем файл для записи результата
-                                writer = new StreamWriter(file1, Encoding.UTF8);//  Encoding.UTF8  or Encoding.Unicode
-                                nn = nn+N;
-                               // writer.WriteLine("Продолжение...");
-                            }
+                            writer.WriteLine(x);
+                            writer.WriteLine("<br/>");
                         }
-                       writer.WriteLine("<br/>");
-                       
                     }
                     writer.Close();
                     text.Close(); //закрываем поток	
-                    
-                    //Console.WriteLine("Результат обработки файлов Вы найдете в файле result.html");
-                    //Console.WriteLine("Открыть файл с результатами (y/n)");
-                    //x = Console.ReadLine();
-                    //if (x == "y")
-                    //{
-                    //    Process.Start("result.html");
-                    //}
                 }
                 else
                 {
-                    Console.WriteLine("Введите правильное значение (1,2,3 или 4)");
+                    Console.WriteLine("Введите правильное значение (1,2,3,4 или 5)");
                     goto link;
                 }
             }
@@ -131,7 +161,7 @@ namespace File_vokab
             {
                 Console.WriteLine("Проверьте, данный файл может быть занят другой программой.");
             }
-         fun:   Console.ReadLine();
+            Console.ReadLine();
 			
 			
 		}
